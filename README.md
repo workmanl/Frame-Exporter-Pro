@@ -193,7 +193,7 @@ Contributions are welcome! Since this is a single-file application:
 
 ## Author
 
-Created by **scotmanl**
+Created by **Scott Manley**
 
 ## License
 
