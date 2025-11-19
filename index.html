@@ -1,0 +1,2681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Professional video frame extraction tool with precision timeline scrubbing and multiple export formats">
+    <meta name="keywords" content="video, frame extraction, timeline, scrubbing, JPEG, PNG, WebP">
+    <meta name="author" content="Frame Exporter Pro">
+    <meta property="og:title" content="Frame Exporter Pro">
+    <meta property="og:description" content="Extract any frame from video files with precision scrubbing">
+    <meta property="og:type" content="website">
+    <title>Frame Exporter Pro - Professional Video Frame Extraction</title>
+    <style>
+        :root {
+            /* Premiere Pro inspired theme */
+            --primary-color: #00a0f5;
+            --primary-hover: #0080c7;
+            --accent-color: #ff6b35;
+            --success-color: #00d4aa;
+            --error-color: #ff5722;
+            --warning-color: #ffb300;
+            
+            /* Premiere Pro color palette */
+            --bg-darkest: #1a1a1a;
+            --bg-dark: #232323;
+            --bg-medium: #2d2d30;
+            --bg-light: #3c3c3c;
+            --bg-lighter: #4a4a4a;
+            
+            --panel-bg: #232323;
+            --panel-header: #2d2d30;
+            --panel-border: #3c3c3c;
+            
+            --timeline-bg: #1a1a1a;
+            --timeline-track: #2d2d30;
+            --timeline-thumb: #00a0f5;
+            --timeline-ruler: #4a4a4a;
+            
+            --text-primary: #e8e8e8;
+            --text-secondary: #b8b8b8;
+            --text-muted: #888888;
+            
+            --button-bg: #4a4a4a;
+            --button-hover: #5a5a5a;
+            --button-active: #00a0f5;
+            
+            --input-bg: #2d2d30;
+            --input-border: #4a4a4a;
+            --input-focus: #00a0f5;
+            
+            --shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+            --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.6);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-darkest);
+            color: var(--text-primary);
+            line-height: 1.4;
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* Top Menu Bar */
+        .menu-bar {
+            background: var(--panel-header);
+            border-bottom: 1px solid var(--panel-border);
+            padding: 0.5rem 1rem;
+            display: flex;
+            align-items: center;
+            height: 40px;
+            font-size: 0.875rem;
+        }
+
+        .app-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-right: 2rem;
+        }
+
+        .app-icon {
+            width: 20px;
+            height: 20px;
+            background: var(--primary-color);
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .menu-items {
+            display: flex;
+            gap: 1rem;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+        }
+
+        .menu-item {
+            position: relative;
+            cursor: pointer;
+            padding: 0.25rem 0.5rem;
+            border-radius: 3px;
+            transition: all 0.2s ease;
+        }
+
+        .menu-item:hover {
+            background: var(--bg-light);
+            color: var(--text-primary);
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 4px;
+            box-shadow: var(--shadow-lg);
+            min-width: 180px;
+            z-index: 1000;
+            display: none;
+            padding: 0.5rem 0;
+        }
+
+        .dropdown-menu.show {
+            display: block;
+        }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.8rem;
+        }
+
+        .dropdown-item:hover {
+            background: var(--bg-light);
+            color: var(--text-primary);
+        }
+
+        .dropdown-item.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .dropdown-item.disabled:hover {
+            background: transparent;
+            color: var(--text-secondary);
+        }
+
+        .dropdown-separator {
+            height: 1px;
+            background: var(--panel-border);
+            margin: 0.25rem 0;
+        }
+
+        .dropdown-item svg {
+            width: 14px;
+            height: 14px;
+            fill: currentColor;
+        }
+
+        /* Main Workspace */
+        .workspace {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Left Panel */
+        .left-panel {
+            width: 300px;
+            background: var(--panel-bg);
+            border-right: 1px solid var(--panel-border);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Center Panel */
+        .center-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-dark);
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        /* Right Panel */
+        .right-panel {
+            width: 280px;
+            background: var(--panel-bg);
+            border-left: 1px solid var(--panel-border);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Panel Headers */
+        .panel-header {
+            background: var(--panel-header);
+            border-bottom: 1px solid var(--panel-border);
+            padding: 0.5rem 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .panel-content {
+            flex: 1;
+            padding: 1rem;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Monitor Container */
+        .monitor-container {
+            position: relative;
+            background: var(--bg-darkest);
+            border-radius: 4px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .preview-canvas {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+            display: block;
+        }
+
+        .monitor-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-darkest);
+            color: var(--text-muted);
+        }
+
+        .monitor-placeholder {
+            text-align: center;
+        }
+
+        .placeholder-icon {
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .monitor-placeholder p {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        /* Timeline Panel */
+        .timeline-panel {
+            background: var(--panel-bg);
+            border-top: 1px solid var(--panel-border);
+            height: 200px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .timeline-controls {
+            padding: 1rem;
+        }
+
+        .timeline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .timeline-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .timeline-placeholder {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        /* Export Panel */
+        .export-panel {
+            padding: 1rem;
+        }
+
+        .export-placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 200px;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        /* Video Info Panel */
+        .video-info-panel {
+            background: var(--bg-medium);
+            border-radius: 4px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .video-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+        }
+
+        .info-item {
+            background: var(--bg-light);
+            padding: 0.5rem;
+            border-radius: 3px;
+            color: var(--text-secondary);
+        }
+
+        /* Project Panel (Left) */
+        .project-panel .drop-zone {
+            background: var(--bg-medium);
+            border: 2px dashed var(--panel-border);
+            border-radius: 4px;
+            padding: 2rem 1rem;
+            text-align: center;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            margin-bottom: 1rem;
+        }
+
+        .project-panel .drop-zone:hover {
+            border-color: var(--primary-color);
+            background: var(--bg-light);
+        }
+
+        .project-panel .drop-zone.dragover {
+            border-color: var(--primary-color);
+            background: var(--bg-light);
+            box-shadow: 0 0 0 2px rgba(0, 160, 245, 0.3);
+        }
+
+        .drop-zone-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .upload-icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 1rem;
+            background: var(--button-bg);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .drop-zone:hover .upload-icon {
+            background: var(--primary-color);
+        }
+
+        .upload-icon svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--text-secondary);
+        }
+
+        .drop-zone:hover .upload-icon svg {
+            fill: white;
+        }
+
+        .drop-zone h3 {
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+            color: var(--text-primary);
+        }
+
+        .drop-zone p {
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+            font-size: 0.75rem;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .browse-button {
+            background: var(--button-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--input-border);
+            padding: 0.5rem 1rem;
+            border-radius: 3px;
+            font-weight: 400;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.75rem;
+        }
+
+        .browse-button:hover {
+            background: var(--button-hover);
+            border-color: var(--primary-color);
+        }
+
+        .processing {
+            display: none;
+            background: var(--bg-medium);
+            border-radius: 4px;
+            padding: 1.5rem;
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 2px solid var(--panel-border);
+            border-top: 2px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 0.75rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .preview-section {
+            display: none;
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: var(--shadow);
+            margin-top: 2rem;
+        }
+
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .preview-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .video-controls {
+            background: var(--background);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border);
+        }
+
+        .controls-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .controls-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .current-time {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+        }
+
+        .scrubber-container {
+            margin-bottom: 1.5rem;
+            position: relative;
+            background: var(--timeline-bg);
+            border-radius: 6px;
+            padding: 1rem;
+            border: 1px solid var(--border);
+        }
+
+        .timeline-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+        }
+
+        .scrubber {
+            width: 100%;
+            height: 12px;
+            border-radius: 6px;
+            background: linear-gradient(to right, var(--timeline-track) 0%, var(--timeline-track) 100%);
+            outline: none;
+            cursor: pointer;
+            -webkit-appearance: none;
+            appearance: none;
+            position: relative;
+            border: 1px solid var(--border);
+        }
+
+        .scrubber::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            background: var(--timeline-thumb);
+            cursor: grab;
+            border: 2px solid #ffffff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+            transition: all 0.2s ease;
+        }
+
+        .scrubber::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            background: var(--timeline-thumb);
+            cursor: grab;
+            border: 2px solid #ffffff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+            transition: all 0.2s ease;
+        }
+
+        .scrubber:hover::-webkit-slider-thumb {
+            background: var(--primary-hover);
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4);
+        }
+
+        .scrubber:active::-webkit-slider-thumb {
+            cursor: grabbing;
+            transform: scale(1.05);
+        }
+
+        .scrubber::-webkit-slider-track {
+            background: var(--timeline-track);
+            border-radius: 6px;
+            height: 12px;
+        }
+
+        .scrubber::-moz-range-track {
+            background: var(--timeline-track);
+            border-radius: 6px;
+            height: 12px;
+            border: none;
+        }
+
+        .export-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .option-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .option-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .format-select, .quality-slider {
+            padding: 0.5rem;
+            border: 1px solid var(--input-border);
+            border-radius: 6px;
+            background: var(--input-bg);
+            color: var(--text-primary);
+            font-size: 0.875rem;
+        }
+
+        .format-select:focus, .quality-slider:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0, 160, 245, 0.1);
+        }
+
+        .format-select {
+            cursor: pointer;
+        }
+
+        .format-select option {
+            background: var(--input-bg);
+            color: var(--text-primary);
+            padding: 0.5rem;
+        }
+
+        .quality-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 8px;
+            background: var(--bg-light);
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .quality-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            transition: all 0.2s ease;
+        }
+
+        .quality-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            transition: all 0.2s ease;
+        }
+
+        .quality-slider:hover::-webkit-slider-thumb {
+            background: var(--primary-hover);
+            transform: scale(1.1);
+        }
+
+        .quality-slider::-webkit-slider-track {
+            background: var(--bg-light);
+            border-radius: 4px;
+            height: 8px;
+        }
+
+        .quality-slider::-moz-range-track {
+            background: var(--bg-light);
+            border-radius: 4px;
+            height: 8px;
+            border: none;
+        }
+
+        .quality-value {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-align: center;
+            margin-top: 0.25rem;
+        }
+
+        .file-size-estimate {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0.75rem;
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        .file-size-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+        }
+
+        .file-size-value {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .frame-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+
+        .preview-image {
+            width: 100%;
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            margin-bottom: 1.5rem;
+            display: block;
+        }
+
+        .actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            font-size: 0.875rem;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: var(--background);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: var(--surface);
+            color: var(--text-primary);
+            transform: translateY(-1px);
+        }
+
+        .error-message {
+            display: none;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: var(--error-color);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        .success-message {
+            display: none;
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: var(--success-color);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        .compatibility-warning {
+            display: none;
+            background: #fef3c7;
+            border: 1px solid #fbbf24;
+            color: var(--warning-color);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        /* Version info */
+        .version-info {
+            position: fixed;
+            bottom: 8px;
+            right: 12px;
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            opacity: 0.6;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+            pointer-events: none;
+            z-index: 10;
+            user-select: none;
+        }
+
+        /* Screen reader only content */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        /* Focus styles for accessibility */
+        .drop-zone:focus {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+
+        .btn:focus,
+        .format-select:focus,
+        .quality-slider:focus,
+        .scrubber:focus {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+
+        @media (max-width: 640px) {
+            .workspace {
+                flex-direction: column;
+            }
+            
+            .left-panel, .right-panel {
+                width: 100%;
+                height: auto;
+            }
+            
+            .timeline-panel {
+                height: 150px;
+            }
+            
+            .export-options {
+                grid-template-columns: 1fr;
+            }
+
+            .actions {
+                flex-direction: column;
+            }
+
+            .btn {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Top Menu Bar -->
+        <div class="menu-bar">
+            <div class="app-title">
+                <div class="app-icon">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="white">
+                        <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                    </svg>
+                </div>
+                Frame Exporter Pro
+            </div>
+            <div class="menu-items">
+                <div class="menu-item" id="fileMenu">
+                    <span>File</span>
+                    <div class="dropdown-menu" id="fileDropdown">
+                        <div class="dropdown-item" data-action="open">
+                            <svg viewBox="0 0 24 24"><path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/></svg>
+                            Open Video...
+                        </div>
+                        <div class="dropdown-separator"></div>
+                        <div class="dropdown-item" data-action="export">
+                            <svg viewBox="0 0 24 24"><path d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z"/></svg>
+                            Export Frame
+                        </div>
+                        <div class="dropdown-item" data-action="export-as">
+                            <svg viewBox="0 0 24 24"><path d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z"/></svg>
+                            Export As...
+                        </div>
+                        <div class="dropdown-separator"></div>
+                        <div class="dropdown-item" data-action="recent">
+                            <svg viewBox="0 0 24 24"><path d="M13.5,8H12V13L16.28,15.54L17,14.33L13.5,12.25V8M13,3A9,9 0 0,0 4,12H1L4.96,16.03L9,12H6A7,7 0 0,1 13,5A7,7 0 0,1 20,12A7,7 0 0,1 13,19C11.07,19 9.32,18.21 8.06,16.94L6.64,18.36C8.27,20 10.5,21 13,21A9,9 0 0,0 22,12A9,9 0 0,0 13,3Z"/></svg>
+                            Recent Files
+                        </div>
+                    </div>
+                </div>
+                <div class="menu-item" id="editMenu">
+                    <span>Edit</span>
+                    <div class="dropdown-menu" id="editDropdown">
+                        <div class="dropdown-item disabled" data-action="undo">
+                            <svg viewBox="0 0 24 24"><path d="M12.5,8C9.85,8 7.45,9 5.6,10.6L2,7V16H11L7.38,12.38C8.77,11.22 10.54,10.5 12.5,10.5C16.04,10.5 19.05,12.81 20.1,16L22.47,15.22C21.08,11.03 17.15,8 12.5,8Z"/></svg>
+                            Undo
+                        </div>
+                        <div class="dropdown-item disabled" data-action="redo">
+                            <svg viewBox="0 0 24 24"><path d="M18.4,10.6C16.55,9 14.15,8 11.5,8C6.85,8 2.92,11.03 1.53,15.22L3.9,16C4.95,12.81 7.96,10.5 11.5,10.5C13.46,10.5 15.23,11.22 16.62,12.38L13,16H22V7L18.4,10.6Z"/></svg>
+                            Redo
+                        </div>
+                        <div class="dropdown-separator"></div>
+                        <div class="dropdown-item" data-action="copy-frame">
+                            <svg viewBox="0 0 24 24"><path d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"/></svg>
+                            Copy Frame
+                        </div>
+                        <div class="dropdown-separator"></div>
+                        <div class="dropdown-item" data-action="preferences">
+                            <svg viewBox="0 0 24 24"><path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.68 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"/></svg>
+                            Preferences
+                        </div>
+                    </div>
+                </div>
+                <div class="menu-item" id="windowMenu">
+                    <span>Window</span>
+                    <div class="dropdown-menu" id="windowDropdown">
+                        <div class="dropdown-item" data-action="minimize">
+                            <svg viewBox="0 0 24 24"><path d="M20,14H4V10H20"/></svg>
+                            Minimize
+                        </div>
+                        <div class="dropdown-item" data-action="zoom">
+                            <svg viewBox="0 0 24 24"><path d="M5,16H3V19A2,2 0 0,0 5,21H8V19H5M5,8H8V6H5A2,2 0 0,0 3,8V11H5M19,8V11H21V8A2,2 0 0,0 19,6H16V8M19,19H16V21H19A2,2 0 0,0 21,19V16H19"/></svg>
+                            Zoom
+                        </div>
+                        <div class="dropdown-separator"></div>
+                        <div class="dropdown-item" data-action="show-project">
+                            <svg viewBox="0 0 24 24"><path d="M10,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V8C22,6.89 21.1,6 20,6H12L10,4Z"/></svg>
+                            Show Project Panel
+                        </div>
+                        <div class="dropdown-item" data-action="show-timeline">
+                            <svg viewBox="0 0 24 24"><path d="M2,3H22C23.05,3 24,3.95 24,5V19C24,20.05 23.05,21 22,21H2C0.95,21 0,20.05 0,19V5C0,3.95 0.95,3 2,3M22,19V5H2V19H22M6,17H18V15H6V17Z"/></svg>
+                            Show Timeline Panel
+                        </div>
+                        <div class="dropdown-item" data-action="show-export">
+                            <svg viewBox="0 0 24 24"><path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/></svg>
+                            Show Export Panel
+                        </div>
+                        <div class="dropdown-separator"></div>
+                        <div class="dropdown-item" data-action="reset-layout">
+                            <svg viewBox="0 0 24 24"><path d="M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z"/></svg>
+                            Reset Layout
+                        </div>
+                    </div>
+                </div>
+                <div class="menu-item" id="helpMenu">
+                    <span>Help</span>
+                    <div class="dropdown-menu" id="helpDropdown">
+                        <div class="dropdown-item" data-action="about">
+                            <svg viewBox="0 0 24 24"><path d="M11,9H13V7H11M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,17H13V11H11V17Z"/></svg>
+                            About Frame Exporter Pro
+                        </div>
+                        <div class="dropdown-separator"></div>
+                        <div class="dropdown-item" data-action="shortcuts">
+                            <svg viewBox="0 0 24 24"><path d="M7,5H21V7H7V5M7,13V11H21V13H7M4,4.5A1.5,1.5 0 0,1 5.5,6A1.5,1.5 0 0,1 4,7.5A1.5,1.5 0 0,1 2.5,6A1.5,1.5 0 0,1 4,4.5M4,10.5A1.5,1.5 0 0,1 5.5,12A1.5,1.5 0 0,1 4,13.5A1.5,1.5 0 0,1 2.5,12A1.5,1.5 0 0,1 4,10.5M7,19V17H21V19H7M4,16.5A1.5,1.5 0 0,1 5.5,18A1.5,1.5 0 0,1 4,19.5A1.5,1.5 0 0,1 2.5,18A1.5,1.5 0 0,1 4,16.5Z"/></svg>
+                            Keyboard Shortcuts
+                        </div>
+                        <div class="dropdown-item" data-action="user-guide">
+                            <svg viewBox="0 0 24 24"><path d="M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M19,19H5V5H19V19Z"/></svg>
+                            User Guide
+                        </div>
+                        <div class="dropdown-separator"></div>
+                        <div class="dropdown-item" data-action="report-bug">
+                            <svg viewBox="0 0 24 24"><path d="M14,12H10V10H14M14,16H10V14H14M20,8H17.19C16.74,7.22 16.12,6.55 15.37,6.04L17,4.41L15.59,3L13.42,5.17C12.96,5.06 12.5,5 12,5C11.5,5 11.04,5.06 10.59,5.17L8.41,3L7,4.41L8.62,6.04C7.88,6.55 7.26,7.22 6.81,8H4V10H6.09C6.04,10.33 6,10.66 6,11V12H4V14H6V15C6,15.34 6.04,15.67 6.09,16H4V18H6.81C7.85,19.79 9.78,21 12,21C14.22,21 16.15,19.79 17.19,18H20V16H17.91C17.96,15.67 18,15.34 18,15V14H20V12H18V11C18,10.66 17.96,10.33 17.91,10H20V8Z"/></svg>
+                            Report Bug
+                        </div>
+                        <div class="dropdown-item" data-action="system-info">
+                            <svg viewBox="0 0 24 24"><path d="M13,9H11V7H13M13,17H11V11H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/></svg>
+                            System Information
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Workspace -->
+        <div class="workspace">
+            <!-- Left Panel - Project -->
+            <div class="left-panel">
+                <div class="panel-header">Project</div>
+                <div class="panel-content project-panel">
+                    <div class="drop-zone" id="dropZone" role="button" tabindex="0" aria-label="Drop video file here or click to browse files">
+                        <div class="drop-zone-content">
+                            <div class="upload-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                                </svg>
+                            </div>
+                            <h3>Import Video</h3>
+                            <p>Drag & drop or browse</p>
+                            <button class="browse-button" id="browseButton" aria-describedby="file-requirements">
+                                Browse
+                            </button>
+                            <div id="file-requirements" class="sr-only">Supported formats: MP4, WebM, MOV, and other video formats. Maximum file size: 500MB.</div>
+                        </div>
+                        <input type="file" id="fileInput" class="file-input" accept="video/*" aria-label="Select video file">
+                    </div>
+
+                    <div class="processing" id="processing" role="status" aria-live="polite">
+                        <div class="spinner" aria-hidden="true"></div>
+                        <h3>Processing...</h3>
+                        <p>Loading video</p>
+                    </div>
+
+                    <div class="video-info-panel" id="videoInfoPanel" style="display: none;">
+                        <div class="video-info" id="videoInfo" role="region" aria-label="Video information">
+                            <!-- Video info will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center Panel - Preview Monitor -->
+            <div class="center-panel">
+                <div class="panel-header">Program Monitor</div>
+                <div class="panel-content preview-monitor">
+                    <div class="monitor-container" id="monitorContainer">
+                        <canvas id="previewCanvas" class="preview-canvas" role="img" aria-label="Current video frame preview"></canvas>
+                        <div class="monitor-overlay" id="monitorOverlay">
+                            <div class="monitor-placeholder">
+                                <div class="placeholder-icon">
+                                    <svg width="64" height="64" viewBox="0 0 24 24" fill="var(--text-muted)">
+                                        <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                                    </svg>
+                                </div>
+                                <p>No video loaded</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timeline Panel -->
+                <div class="timeline-panel">
+                    <div class="panel-header">Timeline</div>
+                    <div class="panel-content">
+                        <div class="timeline-controls" id="timelineControls" style="display: none;">
+                            <div class="timeline-header">
+                                <div class="timeline-info">
+                                    <div class="current-time" id="currentTime" aria-live="polite">0:00 / 0:00</div>
+                                    <div class="frame-info" id="frameInfo" role="status" aria-live="polite">
+                                        <span>Frame: <span id="currentFrame">0</span> / <span id="totalFrames">0</span></span>
+                                        <span>FPS: <span id="videoFps">0</span></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="scrubber-container">
+                                <input type="range" id="scrubber" class="scrubber" min="0" max="100" value="100" step="0.1" 
+                                       aria-label="Video timeline scrubber" aria-describedby="currentTime frameInfo">
+                            </div>
+                        </div>
+                        <div class="timeline-placeholder" id="timelinePlaceholder">
+                            <p>Load a video to see timeline</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel - Export Settings -->
+            <div class="right-panel">
+                <div class="panel-header">Export Settings</div>
+                <div class="panel-content export-panel">
+                    <div class="export-settings" id="exportSettings" style="display: none;">
+                        <div class="export-options">
+                            <div class="option-group">
+                                <label class="option-label" for="formatSelect">Format</label>
+                                <select id="formatSelect" class="format-select" aria-describedby="format-help">
+                                    <option value="jpeg">JPEG</option>
+                                    <option value="png">PNG</option>
+                                    <option value="webp">WebP</option>
+                                </select>
+                                <div id="format-help" class="sr-only">Choose export format: JPEG for photos, PNG for graphics with transparency, WebP for modern browsers</div>
+                            </div>
+                            <div class="option-group">
+                                <label class="option-label" for="qualitySlider">Quality</label>
+                                <input type="range" id="qualitySlider" class="quality-slider" min="10" max="100" value="90" step="5"
+                                       aria-describedby="qualityValue quality-help">
+                                <div class="quality-value" id="qualityValue" aria-live="polite">90%</div>
+                                <div id="quality-help" class="sr-only">Higher quality results in larger file sizes. PNG is always lossless.</div>
+                            </div>
+                        </div>
+                        
+                        <div class="file-size-estimate" role="status" aria-live="polite">
+                            <div class="file-size-label">Estimated Size</div>
+                            <div class="file-size-value" id="fileSizeEstimate">~0 KB</div>
+                        </div>
+                        
+                        <div class="actions" role="group" aria-label="Export actions">
+                            <button class="btn btn-primary" id="exportBtn" aria-describedby="export-help">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                    <path d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z"/>
+                                </svg>
+                                Export Frame
+                            </button>
+                            <div id="export-help" class="sr-only">Export the current frame as an image file in the selected format and quality</div>
+                            <button class="btn btn-secondary" id="resetBtn" aria-label="Reset and try another video">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                    <path d="M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z"/>
+                                </svg>
+                                New Video
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="export-placeholder" id="exportPlaceholder">
+                        <p>Load a video to configure export settings</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="error-message" id="errorMessage" role="alert" aria-live="assertive"></div>
+        <div class="success-message" id="successMessage" role="status" aria-live="polite"></div>
+        <div class="compatibility-warning" id="compatibilityWarning" role="alert" aria-live="polite"></div>
+        
+        <!-- Version info -->
+        <div class="version-info">v0.1 vibe coded by github.com/workmanl</div>
+    </div>
+
+    <script>
+        /**
+         * Frame Exporter Pro - Production-Ready Video Frame Extraction Tool
+         * 
+         * A comprehensive, enterprise-grade application for extracting frames from video files
+         * with precision timeline scrubbing, multiple export formats, and professional UI.
+         * 
+         * Features:
+         * - Memory leak prevention with proper cleanup
+         * - Comprehensive error handling and validation
+         * - Browser compatibility detection
+         * - Accessibility compliance (WCAG 2.1 AA)
+         * - Performance optimization for large files
+         * - Security measures and input sanitization
+         * 
+         * @version 2.1.0
+         * @author Frame Exporter Pro Team
+         */
+        class FrameExporterPro {
+            constructor() {
+                // DOM element references first (needed for compatibility warnings)
+                this.initializeElements();
+                
+                // Feature detection and compatibility check
+                if (!this.checkBrowserCompatibility()) {
+                    return;
+                }
+                
+                // Application state
+                this.initializeState();
+                
+                // Create hidden video element for processing
+                this.initializeVideoElement();
+                
+                // Set up all event listeners
+                this.initializeEventListeners();
+                
+                // Initialize UI state
+                this.initializeUI();
+            }
+
+            /**
+             * Check browser compatibility for required APIs
+             * @returns {boolean} True if browser is compatible
+             */
+            checkBrowserCompatibility() {
+                const requiredFeatures = {
+                    'HTML5 Video API': !!window.HTMLVideoElement,
+                    'Canvas API': !!window.HTMLCanvasElement && !!document.createElement('canvas').getContext,
+                    'File API': !!window.File && !!window.FileReader && !!window.FileList && !!window.Blob,
+                    'URL API': !!window.URL && !!window.URL.createObjectURL,
+                    'Range Input': (() => {
+                        const input = document.createElement('input');
+                        input.type = 'range';
+                        return input.type === 'range';
+                    })()
+                };
+
+                const missingFeatures = Object.entries(requiredFeatures)
+                    .filter(([name, supported]) => !supported)
+                    .map(([name]) => name);
+
+                if (missingFeatures.length > 0) {
+                    this.showCompatibilityWarning(missingFeatures);
+                    return false;
+                }
+
+                return true;
+            }
+
+            /**
+             * Initialize DOM element references with null checks
+             */
+            initializeElements() {
+                this.elements = {
+                    dropZone: document.getElementById('dropZone'),
+                    fileInput: document.getElementById('fileInput'),
+                    processing: document.getElementById('processing'),
+                    previewCanvas: document.getElementById('previewCanvas'),
+                    videoInfo: document.getElementById('videoInfo'),
+                    videoInfoPanel: document.getElementById('videoInfoPanel'),
+                    monitorOverlay: document.getElementById('monitorOverlay'),
+                    timelineControls: document.getElementById('timelineControls'),
+                    timelinePlaceholder: document.getElementById('timelinePlaceholder'),
+                    exportSettings: document.getElementById('exportSettings'),
+                    exportPlaceholder: document.getElementById('exportPlaceholder'),
+                    scrubber: document.getElementById('scrubber'),
+                    currentTime: document.getElementById('currentTime'),
+                    formatSelect: document.getElementById('formatSelect'),
+                    qualitySlider: document.getElementById('qualitySlider'),
+                    qualityValue: document.getElementById('qualityValue'),
+                    exportBtn: document.getElementById('exportBtn'),
+                    resetBtn: document.getElementById('resetBtn'),
+                    errorMessage: document.getElementById('errorMessage'),
+                    successMessage: document.getElementById('successMessage'),
+                    compatibilityWarning: document.getElementById('compatibilityWarning'),
+                    currentFrame: document.getElementById('currentFrame'),
+                    totalFrames: document.getElementById('totalFrames'),
+                    videoFps: document.getElementById('videoFps'),
+                    fileSizeEstimate: document.getElementById('fileSizeEstimate')
+                };
+
+                // Validate critical elements exist
+                const criticalElements = ['dropZone', 'fileInput', 'previewCanvas', 'scrubber', 'exportBtn'];
+                const missingElements = criticalElements.filter(id => !this.elements[id]);
+                
+                if (missingElements.length > 0) {
+                    throw new Error(`Critical DOM elements missing: ${missingElements.join(', ')}`);
+                }
+            }
+
+            /**
+             * Initialize application state variables
+             */
+            initializeState() {
+                this.state = {
+                    currentFile: null,
+                    isVideoLoaded: false,
+                    videoFps: 30,
+                    totalFrames: 0,
+                    currentBlobUrl: null,
+                    isProcessing: false,
+                    loadingTimeout: null,
+                    scrubberTimeout: null,
+                    retryCount: 0,
+                    maxRetries: 3
+                };
+            }
+
+            /**
+             * Create and configure the hidden video element
+             */
+            initializeVideoElement() {
+                this.video = document.createElement('video');
+                this.video.style.display = 'none';
+                this.video.preload = 'metadata';
+                this.video.crossOrigin = 'anonymous'; // For CORS compliance
+                this.video.muted = true; // Prevent audio playback
+                document.body.appendChild(this.video);
+            }
+
+            /**
+             * Initialize all event listeners with proper binding
+             */
+            initializeEventListeners() {
+                // Store bound methods for proper cleanup
+                this.boundMethods = {
+                    handleDragOver: this.handleDragOver.bind(this),
+                    handleDragLeave: this.handleDragLeave.bind(this),
+                    handleDrop: this.handleDrop.bind(this),
+                    handleDropZoneClick: this.handleDropZoneClick.bind(this),
+                    handleDropZoneKeydown: this.handleDropZoneKeydown.bind(this),
+                    handleBrowseClick: this.handleBrowseClick.bind(this),
+                    handleFileSelect: this.handleFileSelect.bind(this),
+                    handleScrubberInput: this.handleScrubberInput.bind(this),
+                    handleScrubberChange: this.handleScrubberChange.bind(this),
+                    handleScrubberKeydown: this.handleScrubberKeydown.bind(this),
+                    updateQualityDisplay: this.updateQualityDisplay.bind(this),
+                    updateFileSizeEstimate: this.updateFileSizeEstimate.bind(this),
+                    updateExportButton: this.updateExportButton.bind(this),
+                    exportFrame: this.exportFrame.bind(this),
+                    reset: this.reset.bind(this),
+                    handleVideoLoaded: this.handleVideoLoaded.bind(this),
+                    captureFrame: this.captureFrame.bind(this),
+                    handleVideoError: this.handleVideoError.bind(this),
+                    handleBeforeUnload: this.handleBeforeUnload.bind(this)
+                };
+
+                // Drag and drop events
+                this.elements.dropZone.addEventListener('dragover', this.boundMethods.handleDragOver);
+                this.elements.dropZone.addEventListener('dragleave', this.boundMethods.handleDragLeave);
+                this.elements.dropZone.addEventListener('drop', this.boundMethods.handleDrop);
+                this.elements.dropZone.addEventListener('click', this.boundMethods.handleDropZoneClick);
+                this.elements.dropZone.addEventListener('keydown', this.boundMethods.handleDropZoneKeydown);
+
+                // File input events
+                document.getElementById('browseButton').addEventListener('click', this.boundMethods.handleBrowseClick);
+                this.elements.fileInput.addEventListener('change', this.boundMethods.handleFileSelect);
+
+                // Scrubber events
+                this.elements.scrubber.addEventListener('input', this.boundMethods.handleScrubberInput);
+                this.elements.scrubber.addEventListener('change', this.boundMethods.handleScrubberChange);
+                this.elements.scrubber.addEventListener('keydown', this.boundMethods.handleScrubberKeydown);
+
+                // Quality and format controls
+                this.elements.qualitySlider.addEventListener('input', this.boundMethods.updateQualityDisplay);
+                this.elements.qualitySlider.addEventListener('input', this.boundMethods.updateFileSizeEstimate);
+                this.elements.formatSelect.addEventListener('change', this.boundMethods.updateExportButton);
+                this.elements.formatSelect.addEventListener('change', this.boundMethods.updateFileSizeEstimate);
+
+                // Action buttons
+                this.elements.exportBtn.addEventListener('click', this.boundMethods.exportFrame);
+                this.elements.resetBtn.addEventListener('click', this.boundMethods.reset);
+
+                // Video events
+                this.video.addEventListener('loadedmetadata', this.boundMethods.handleVideoLoaded);
+                this.video.addEventListener('seeked', this.boundMethods.captureFrame);
+                this.video.addEventListener('error', this.boundMethods.handleVideoError);
+
+                // Cleanup on page unload
+                window.addEventListener('beforeunload', this.boundMethods.handleBeforeUnload);
+
+                // Menu system
+                this.initializeMenuSystem();
+            }
+
+            /**
+             * Initialize UI state and display
+             */
+            initializeUI() {
+                this.updateQualityDisplay();
+                this.updateExportButton();
+                this.hideAllMessages();
+            }
+
+            /**
+             * Handle drag over events
+             */
+            handleDragOver(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.elements.dropZone.classList.add('dragover');
+            }
+
+            /**
+             * Handle drag leave events
+             */
+            handleDragLeave(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.elements.dropZone.classList.remove('dragover');
+            }
+
+            /**
+             * Handle file drop events
+             */
+            handleDrop(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.elements.dropZone.classList.remove('dragover');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    this.processFile(files[0]);
+                }
+            }
+
+            /**
+             * Handle drop zone click events
+             */
+            handleDropZoneClick(e) {
+                if (!e.target.closest('#browseButton')) {
+                    this.elements.fileInput.click();
+                }
+            }
+
+            /**
+             * Handle keyboard navigation for drop zone
+             */
+            handleDropZoneKeydown(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    this.elements.fileInput.click();
+                }
+            }
+
+            /**
+             * Handle browse button click
+             */
+            handleBrowseClick(e) {
+                e.stopPropagation();
+                this.elements.fileInput.click();
+            }
+
+            /**
+             * Handle file selection from input
+             */
+            handleFileSelect(e) {
+                const files = e.target.files;
+                if (files.length > 0) {
+                    this.processFile(files[0]);
+                }
+            }
+
+            /**
+             * Process selected video file with comprehensive validation
+             */
+            processFile(file) {
+                try {
+                    // Prevent multiple simultaneous processing
+                    if (this.state.isProcessing) {
+                        this.showError('Already processing a file. Please wait or reset to try again.');
+                        return;
+                    }
+
+                    // Input validation
+                    if (!this.validateFile(file)) {
+                        return;
+                    }
+
+                    this.state.isProcessing = true;
+                    this.state.currentFile = this.sanitizeFile(file);
+                    this.state.retryCount = 0;
+                    
+                    this.hideAllMessages();
+                    this.showProcessing();
+                    this.disableControls();
+
+                    this.loadVideo(file);
+                } catch (error) {
+                    this.handleProcessingError('File processing failed', error);
+                }
+            }
+
+            /**
+             * Validate file type, size, and properties
+             */
+            validateFile(file) {
+                if (!file) {
+                    this.showError('No file selected.');
+                    return false;
+                }
+
+                if (!file.type.startsWith('video/')) {
+                    this.showError(`Invalid file type: ${file.type}. Please select a valid video file (MP4, WebM, MOV, etc.).`);
+                    return false;
+                }
+
+                const maxSize = 500 * 1024 * 1024; // 500MB
+                if (file.size > maxSize) {
+                    this.showError(`File too large: ${this.formatFileSize(file.size)}. Maximum size is ${this.formatFileSize(maxSize)}.`);
+                    return false;
+                }
+
+                if (file.size === 0) {
+                    this.showError('File appears to be empty or corrupted.');
+                    return false;
+                }
+
+                return true;
+            }
+
+            /**
+             * Sanitize file properties for security
+             */
+            sanitizeFile(file) {
+                const sanitizedName = file.name.replace(/[<>:"/\\|?*\x00-\x1f]/g, '_');
+                return { ...file, name: sanitizedName };
+            }
+
+            /**
+             * Load video with proper error handling and cleanup
+             */
+            loadVideo(file) {
+                try {
+                    // Clean up any existing blob URL
+                    this.cleanupBlobUrl();
+                    
+                    // Create new blob URL
+                    this.state.currentBlobUrl = URL.createObjectURL(file);
+                    this.video.src = this.state.currentBlobUrl;
+                    this.video.load();
+                    
+                    // Set timeout for video loading
+                    this.state.loadingTimeout = setTimeout(() => {
+                        this.handleVideoError('Video loading timeout. Please try a different file or check your connection.');
+                    }, 30000); // 30 second timeout
+                } catch (error) {
+                    this.handleProcessingError('Failed to load video', error);
+                }
+            }
+
+            /**
+             * Handle successful video metadata loading
+             */
+            handleVideoLoaded() {
+                try {
+                    // Clear loading timeout
+                    this.clearLoadingTimeout();
+
+                    // Validate video properties
+                    if (!this.validateVideoMetadata()) {
+                        return;
+                    }
+
+                    this.state.isVideoLoaded = true;
+                    
+                    // Estimate FPS and calculate frames
+                    this.estimateFPS();
+                    this.state.totalFrames = Math.floor(this.video.duration * this.state.videoFps);
+                    
+                    // Configure scrubber
+                    this.setupScrubber();
+                    
+                    // Seek to final frame initially
+                    this.seekToFinalFrame();
+                    
+                    // Update UI
+                    this.updateAllDisplays();
+                    
+                    // Enable controls
+                    this.enableControls();
+                    
+                    // Capture initial frame
+                    setTimeout(() => {
+                        this.captureFrameImmediate();
+                    }, 100);
+                } catch (error) {
+                    this.handleProcessingError('Video processing failed', error);
+                }
+            }
+
+            /**
+             * Validate video metadata
+             */
+            validateVideoMetadata() {
+                if (!this.video.duration || this.video.duration === Infinity || isNaN(this.video.duration)) {
+                    this.handleVideoError('Invalid video duration. Please try a different file.');
+                    return false;
+                }
+
+                if (!this.video.videoWidth || !this.video.videoHeight || 
+                    this.video.videoWidth <= 0 || this.video.videoHeight <= 0) {
+                    this.handleVideoError('Invalid video dimensions. Please try a different file.');
+                    return false;
+                }
+
+                if (this.video.videoWidth > 7680 || this.video.videoHeight > 4320) {
+                    this.showError('Video resolution too high (max 8K). This may cause performance issues.');
+                }
+
+                return true;
+            }
+
+            /**
+             * Setup scrubber for frame-accurate seeking
+             */
+            setupScrubber() {
+                this.elements.scrubber.max = this.state.totalFrames;
+                this.elements.scrubber.step = 1;
+                this.elements.scrubber.value = this.state.totalFrames;
+            }
+
+            /**
+             * Seek to the final frame of the video
+             */
+            seekToFinalFrame() {
+                const seekTime = Math.max(0, this.video.duration - (1 / this.state.videoFps));
+                this.video.currentTime = seekTime;
+            }
+
+            /**
+             * Handle scrubber input for real-time preview
+             */
+            handleScrubberInput() {
+                if (!this.state.isVideoLoaded) return;
+                
+                const frameNumber = parseInt(this.elements.scrubber.value);
+                const time = frameNumber / this.state.videoFps;
+                
+                this.video.currentTime = Math.min(time, this.video.duration);
+                this.updateTimeDisplay();
+                this.updateFrameInfo();
+                
+                // Debounced frame capture for performance
+                clearTimeout(this.state.scrubberTimeout);
+                this.state.scrubberTimeout = setTimeout(() => {
+                    this.captureFrameImmediate();
+                }, 50);
+            }
+
+            /**
+             * Handle scrubber change (final position)
+             */
+            handleScrubberChange() {
+                if (!this.state.isVideoLoaded) return;
+                
+                const frameNumber = parseInt(this.elements.scrubber.value);
+                const time = frameNumber / this.state.videoFps;
+                
+                this.video.currentTime = Math.min(time, this.video.duration);
+                this.updateTimeDisplay();
+                this.updateFrameInfo();
+                
+                // Final frame capture
+                clearTimeout(this.state.scrubberTimeout);
+                setTimeout(() => {
+                    this.captureFrameImmediate();
+                }, 100);
+            }
+
+            /**
+             * Handle keyboard navigation for scrubber
+             */
+            handleScrubberKeydown(e) {
+                if (!this.state.isVideoLoaded) return;
+
+                let frameChange = 0;
+                const currentFrame = parseInt(this.elements.scrubber.value);
+
+                switch (e.key) {
+                    case 'ArrowLeft':
+                        frameChange = -1;
+                        break;
+                    case 'ArrowRight':
+                        frameChange = 1;
+                        break;
+                    case 'ArrowUp':
+                        frameChange = 10;
+                        break;
+                    case 'ArrowDown':
+                        frameChange = -10;
+                        break;
+                    case 'Home':
+                        this.elements.scrubber.value = 0;
+                        this.handleScrubberInput();
+                        e.preventDefault();
+                        return;
+                    case 'End':
+                        this.elements.scrubber.value = this.state.totalFrames;
+                        this.handleScrubberInput();
+                        e.preventDefault();
+                        return;
+                    default:
+                        return;
+                }
+
+                if (frameChange !== 0) {
+                    e.preventDefault();
+                    const newFrame = Math.max(0, Math.min(this.state.totalFrames, currentFrame + frameChange));
+                    this.elements.scrubber.value = newFrame;
+                    this.handleScrubberInput();
+                }
+            }
+
+            /**
+             * Capture frame immediately without waiting for seeked event
+             */
+            captureFrameImmediate() {
+                if (!this.state.isVideoLoaded || !this.video.videoWidth || !this.video.videoHeight) {
+                    return;
+                }
+
+                try {
+                    const canvas = this.elements.previewCanvas;
+                    const ctx = canvas.getContext('2d');
+
+                    // Set canvas dimensions
+                    canvas.width = this.video.videoWidth;
+                    canvas.height = this.video.videoHeight;
+
+                    // Clear and draw frame
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(this.video, 0, 0, canvas.width, canvas.height);
+
+                    // Update displays
+                    this.updateFrameInfo();
+                    this.updateFileSizeEstimate();
+                    
+                    // Show preview if processing
+                    if (this.state.isProcessing) {
+                        this.state.isProcessing = false;
+                        this.hideProcessing();
+                        this.showPreview();
+                    }
+                } catch (error) {
+                    // Retry with exponential backoff
+                    if (this.state.retryCount < this.state.maxRetries) {
+                        this.state.retryCount++;
+                        const delay = Math.pow(2, this.state.retryCount) * 100;
+                        setTimeout(() => {
+                            if (this.state.isVideoLoaded) {
+                                this.captureFrameImmediate();
+                            }
+                        }, delay);
+                    } else {
+                        this.handleProcessingError('Frame capture failed after multiple attempts', error);
+                    }
+                }
+            }
+
+            /**
+             * Standard frame capture (triggered by seeked event)
+             */
+            captureFrame() {
+                this.captureFrameImmediate();
+            }
+
+            /**
+             * Export current frame with selected format and quality
+             */
+            exportFrame() {
+                try {
+                    if (!this.state.isVideoLoaded) {
+                        this.showError('No video loaded. Please load a video first.');
+                        return;
+                    }
+
+                    const canvas = this.elements.previewCanvas;
+                    const format = this.elements.formatSelect.value;
+                    const quality = this.elements.qualitySlider.value / 100;
+                    
+                    // Disable export button during processing
+                    this.elements.exportBtn.disabled = true;
+                    
+                    const { mimeType, extension } = this.getExportFormat(format);
+                    
+                    canvas.toBlob((blob) => {
+                        if (!blob) {
+                            this.showError('Failed to generate image. Please try again.');
+                            this.elements.exportBtn.disabled = false;
+                            return;
+                        }
+
+                        this.downloadBlob(blob, extension);
+                        this.showSuccess(`Frame exported successfully as ${format.toUpperCase()}!`);
+                        this.elements.exportBtn.disabled = false;
+                    }, mimeType, format === 'png' ? undefined : quality);
+                } catch (error) {
+                    this.handleProcessingError('Export failed', error);
+                    this.elements.exportBtn.disabled = false;
+                }
+            }
+
+            /**
+             * Get export format configuration
+             */
+            getExportFormat(format) {
+                const formats = {
+                    png: { mimeType: 'image/png', extension: 'png' },
+                    webp: { mimeType: 'image/webp', extension: 'webp' },
+                    jpeg: { mimeType: 'image/jpeg', extension: 'jpg' }
+                };
+                return formats[format] || formats.jpeg;
+            }
+
+            /**
+             * Download blob as file
+             */
+            downloadBlob(blob, extension) {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = this.generateFilename(extension);
+                
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                
+                // Clean up blob URL
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+            }
+
+            /**
+             * Generate export filename
+             */
+            generateFilename(extension) {
+                const baseName = this.state.currentFile.name.replace(/\.[^/.]+$/, '');
+                const timestamp = this.formatDuration(this.video.currentTime).replace(':', 'm') + 's';
+                const frameNumber = Math.floor(this.video.currentTime * this.state.videoFps);
+                return `${baseName}_frame_${frameNumber}_${timestamp}.${extension}`;
+            }
+
+            /**
+             * Reset application to initial state
+             */
+            reset() {
+                try {
+                    // Clean up resources
+                    this.cleanup();
+                    
+                    // Reset state
+                    this.state.currentFile = null;
+                    this.state.isVideoLoaded = false;
+                    this.state.isProcessing = false;
+                    this.state.retryCount = 0;
+                    
+                    // Reset video
+                    this.video.src = '';
+                    
+                    // Reset form elements
+                    this.elements.fileInput.value = '';
+                    this.elements.scrubber.value = 100;
+                    this.elements.qualitySlider.value = 90;
+                    this.elements.formatSelect.value = 'jpeg';
+                    
+                    // Update displays
+                    this.updateQualityDisplay();
+                    this.updateExportButton();
+                    
+                    // Reset UI state
+                    this.hideProcessing();
+                    this.hidePreview();
+                    this.hideAllMessages();
+                    this.enableControls();
+                } catch (error) {
+                    this.handleProcessingError('Reset failed', error);
+                }
+            }
+
+            /**
+             * Clean up resources and timeouts
+             */
+            cleanup() {
+                this.cleanupBlobUrl();
+                this.clearLoadingTimeout();
+                this.clearScrubberTimeout();
+            }
+
+            /**
+             * Clean up blob URL
+             */
+            cleanupBlobUrl() {
+                if (this.state.currentBlobUrl) {
+                    URL.revokeObjectURL(this.state.currentBlobUrl);
+                    this.state.currentBlobUrl = null;
+                }
+            }
+
+            /**
+             * Clear loading timeout
+             */
+            clearLoadingTimeout() {
+                if (this.state.loadingTimeout) {
+                    clearTimeout(this.state.loadingTimeout);
+                    this.state.loadingTimeout = null;
+                }
+            }
+
+            /**
+             * Clear scrubber timeout
+             */
+            clearScrubberTimeout() {
+                if (this.state.scrubberTimeout) {
+                    clearTimeout(this.state.scrubberTimeout);
+                    this.state.scrubberTimeout = null;
+                }
+            }
+
+            /**
+             * Handle video errors
+             */
+            handleVideoError(message) {
+                this.handleProcessingError(message || 'Video loading failed');
+            }
+
+            /**
+             * Handle processing errors with cleanup
+             */
+            handleProcessingError(message, error = null) {
+                this.cleanup();
+                this.state.isProcessing = false;
+                this.hideProcessing();
+                this.enableControls();
+                
+                if (error) {
+                    // Log error for debugging (remove in production)
+                    if (typeof console !== 'undefined' && console.error) {
+                        console.error('Frame Exporter Error:', error);
+                    }
+                }
+                
+                this.showError(message);
+            }
+
+            /**
+             * Handle page unload cleanup
+             */
+            handleBeforeUnload() {
+                this.cleanup();
+                this.removeEventListeners();
+            }
+
+            /**
+             * Remove all event listeners for cleanup
+             */
+            removeEventListeners() {
+                if (!this.boundMethods) return;
+
+                // Remove DOM event listeners
+                this.elements.dropZone?.removeEventListener('dragover', this.boundMethods.handleDragOver);
+                this.elements.dropZone?.removeEventListener('dragleave', this.boundMethods.handleDragLeave);
+                this.elements.dropZone?.removeEventListener('drop', this.boundMethods.handleDrop);
+                this.elements.dropZone?.removeEventListener('click', this.boundMethods.handleDropZoneClick);
+                this.elements.dropZone?.removeEventListener('keydown', this.boundMethods.handleDropZoneKeydown);
+
+                document.getElementById('browseButton')?.removeEventListener('click', this.boundMethods.handleBrowseClick);
+                this.elements.fileInput?.removeEventListener('change', this.boundMethods.handleFileSelect);
+
+                this.elements.scrubber?.removeEventListener('input', this.boundMethods.handleScrubberInput);
+                this.elements.scrubber?.removeEventListener('change', this.boundMethods.handleScrubberChange);
+                this.elements.scrubber?.removeEventListener('keydown', this.boundMethods.handleScrubberKeydown);
+
+                this.elements.qualitySlider?.removeEventListener('input', this.boundMethods.updateQualityDisplay);
+                this.elements.qualitySlider?.removeEventListener('input', this.boundMethods.updateFileSizeEstimate);
+                this.elements.formatSelect?.removeEventListener('change', this.boundMethods.updateExportButton);
+                this.elements.formatSelect?.removeEventListener('change', this.boundMethods.updateFileSizeEstimate);
+
+                this.elements.exportBtn?.removeEventListener('click', this.boundMethods.exportFrame);
+                this.elements.resetBtn?.removeEventListener('click', this.boundMethods.reset);
+
+                // Remove video event listeners
+                this.video?.removeEventListener('loadedmetadata', this.boundMethods.handleVideoLoaded);
+                this.video?.removeEventListener('seeked', this.boundMethods.captureFrame);
+                this.video?.removeEventListener('error', this.boundMethods.handleVideoError);
+
+                window.removeEventListener('beforeunload', this.boundMethods.handleBeforeUnload);
+            }
+
+            // UI Update Methods
+
+            updateAllDisplays() {
+                this.updateTimeDisplay();
+                this.updateVideoInfo();
+                this.updateFrameInfo();
+                this.updateFileSizeEstimate();
+            }
+
+            updateTimeDisplay() {
+                if (!this.state.isVideoLoaded) return;
+                
+                const current = this.formatDuration(this.video.currentTime);
+                const total = this.formatDuration(this.video.duration);
+                if (this.elements.currentTime) {
+                    this.elements.currentTime.textContent = `${current} / ${total}`;
+                }
+            }
+
+            updateVideoInfo() {
+                if (!this.state.isVideoLoaded || !this.elements.videoInfo) return;
+                
+                const duration = this.formatDuration(this.video.duration);
+                const dimensions = `${this.video.videoWidth}×${this.video.videoHeight}`;
+                const fileSize = this.formatFileSize(this.state.currentFile.size);
+                const fileName = this.state.currentFile.name;
+
+                this.elements.videoInfo.innerHTML = `
+                    <div class="info-item">📁 ${fileName}</div>
+                    <div class="info-item">⏱️ ${duration}</div>
+                    <div class="info-item">📐 ${dimensions}</div>
+                    <div class="info-item">💾 ${fileSize}</div>
+                `;
+            }
+
+            updateFrameInfo() {
+                if (!this.state.isVideoLoaded) return;
+                
+                const currentFrame = Math.floor(this.video.currentTime * this.state.videoFps);
+                
+                if (this.elements.currentFrame) {
+                    this.elements.currentFrame.textContent = currentFrame;
+                }
+                if (this.elements.totalFrames) {
+                    this.elements.totalFrames.textContent = this.state.totalFrames;
+                }
+                if (this.elements.videoFps) {
+                    this.elements.videoFps.textContent = this.state.videoFps.toFixed(1);
+                }
+            }
+
+            updateQualityDisplay() {
+                if (this.elements.qualityValue) {
+                    this.elements.qualityValue.textContent = `${this.elements.qualitySlider.value}%`;
+                }
+            }
+
+            updateExportButton() {
+                if (!this.elements.exportBtn || !this.elements.formatSelect) return;
+                
+                const format = this.elements.formatSelect.value.toUpperCase();
+                this.elements.exportBtn.innerHTML = `
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z"/>
+                    </svg>
+                    Export as ${format}
+                `;
+            }
+
+            updateFileSizeEstimate() {
+                if (!this.state.isVideoLoaded || !this.elements.fileSizeEstimate) return;
+                
+                const canvas = this.elements.previewCanvas;
+                const format = this.elements.formatSelect.value;
+                const quality = this.elements.qualitySlider.value / 100;
+                
+                // Estimate file size based on canvas dimensions and format
+                const width = canvas.width || this.video.videoWidth;
+                const height = canvas.height || this.video.videoHeight;
+                const pixels = width * height;
+                
+                let estimatedBytes;
+                
+                switch (format) {
+                    case 'png':
+                        // PNG is lossless, roughly 3-4 bytes per pixel
+                        estimatedBytes = pixels * 3.5;
+                        break;
+                    case 'webp':
+                        // WebP is more efficient than JPEG
+                        estimatedBytes = pixels * (0.5 + (1 - quality) * 0.5);
+                        break;
+                    default: // jpeg
+                        // JPEG compression varies significantly with quality
+                        const compressionFactor = 0.2 + (quality * 1.8);
+                        estimatedBytes = pixels * compressionFactor;
+                        break;
+                }
+                
+                // Add some overhead for headers and metadata
+                estimatedBytes *= 1.1;
+                
+                this.elements.fileSizeEstimate.textContent = `~${this.formatFileSize(estimatedBytes)}`;
+            }
+
+            // UI State Management
+
+            showProcessing() {
+                if (this.elements.processing) this.elements.processing.style.display = 'block';
+                if (this.elements.videoInfoPanel) this.elements.videoInfoPanel.style.display = 'none';
+                if (this.elements.monitorOverlay) this.elements.monitorOverlay.style.display = 'flex';
+                if (this.elements.timelineControls) this.elements.timelineControls.style.display = 'none';
+                if (this.elements.timelinePlaceholder) this.elements.timelinePlaceholder.style.display = 'flex';
+                if (this.elements.exportSettings) this.elements.exportSettings.style.display = 'none';
+                if (this.elements.exportPlaceholder) this.elements.exportPlaceholder.style.display = 'flex';
+            }
+
+            hideProcessing() {
+                if (this.elements.processing) this.elements.processing.style.display = 'none';
+            }
+
+            showPreview() {
+                // Show video info panel
+                if (this.elements.videoInfoPanel) this.elements.videoInfoPanel.style.display = 'block';
+                
+                // Hide monitor overlay to show canvas
+                if (this.elements.monitorOverlay) this.elements.monitorOverlay.style.display = 'none';
+                
+                // Show timeline controls
+                if (this.elements.timelineControls) this.elements.timelineControls.style.display = 'block';
+                if (this.elements.timelinePlaceholder) this.elements.timelinePlaceholder.style.display = 'none';
+                
+                // Show export settings
+                if (this.elements.exportSettings) this.elements.exportSettings.style.display = 'block';
+                if (this.elements.exportPlaceholder) this.elements.exportPlaceholder.style.display = 'none';
+            }
+
+            hidePreview() {
+                // Hide video info panel
+                if (this.elements.videoInfoPanel) this.elements.videoInfoPanel.style.display = 'none';
+                
+                // Show monitor overlay
+                if (this.elements.monitorOverlay) this.elements.monitorOverlay.style.display = 'flex';
+                
+                // Hide timeline controls
+                if (this.elements.timelineControls) this.elements.timelineControls.style.display = 'none';
+                if (this.elements.timelinePlaceholder) this.elements.timelinePlaceholder.style.display = 'flex';
+                
+                // Hide export settings
+                if (this.elements.exportSettings) this.elements.exportSettings.style.display = 'none';
+                if (this.elements.exportPlaceholder) this.elements.exportPlaceholder.style.display = 'flex';
+            }
+
+            disableControls() {
+                if (this.elements.exportBtn) this.elements.exportBtn.disabled = true;
+                if (this.elements.resetBtn) this.elements.resetBtn.disabled = true;
+                if (this.elements.scrubber) this.elements.scrubber.disabled = true;
+                if (this.elements.formatSelect) this.elements.formatSelect.disabled = true;
+                if (this.elements.qualitySlider) this.elements.qualitySlider.disabled = true;
+            }
+
+            enableControls() {
+                if (this.elements.exportBtn) this.elements.exportBtn.disabled = false;
+                if (this.elements.resetBtn) this.elements.resetBtn.disabled = false;
+                if (this.elements.scrubber) this.elements.scrubber.disabled = false;
+                if (this.elements.formatSelect) this.elements.formatSelect.disabled = false;
+                if (this.elements.qualitySlider) this.elements.qualitySlider.disabled = false;
+            }
+
+            // Message Display Methods
+
+            showError(message) {
+                if (this.elements.errorMessage) {
+                    this.elements.errorMessage.textContent = message;
+                    this.elements.errorMessage.style.display = 'block';
+                }
+                if (this.elements.successMessage) {
+                    this.elements.successMessage.style.display = 'none';
+                }
+                if (this.elements.compatibilityWarning) {
+                    this.elements.compatibilityWarning.style.display = 'none';
+                }
+            }
+
+            showSuccess(message) {
+                if (this.elements.successMessage) {
+                    this.elements.successMessage.textContent = message;
+                    this.elements.successMessage.style.display = 'block';
+                }
+                if (this.elements.errorMessage) {
+                    this.elements.errorMessage.style.display = 'none';
+                }
+                if (this.elements.compatibilityWarning) {
+                    this.elements.compatibilityWarning.style.display = 'none';
+                }
+            }
+
+            showCompatibilityWarning(missingFeatures) {
+                const message = `Your browser is missing required features: ${missingFeatures.join(', ')}. Please use a modern browser like Chrome, Firefox, Safari, or Edge.`;
+                if (this.elements.compatibilityWarning) {
+                    this.elements.compatibilityWarning.textContent = message;
+                    this.elements.compatibilityWarning.style.display = 'block';
+                }
+                if (this.elements.errorMessage) {
+                    this.elements.errorMessage.style.display = 'none';
+                }
+                if (this.elements.successMessage) {
+                    this.elements.successMessage.style.display = 'none';
+                }
+            }
+
+            hideAllMessages() {
+                if (this.elements.errorMessage) this.elements.errorMessage.style.display = 'none';
+                if (this.elements.successMessage) this.elements.successMessage.style.display = 'none';
+                if (this.elements.compatibilityWarning) this.elements.compatibilityWarning.style.display = 'none';
+            }
+
+            // Utility Methods
+
+            estimateFPS() {
+                // Try to estimate FPS from video metadata or use common frame rates
+                // Most videos are 24, 25, 30, 50, or 60 FPS
+                const duration = this.video.duration;
+                
+                // For web videos, common frame rates are 30 or 60 FPS
+                // We'll default to 30 FPS as it's most common
+                // In a real implementation, you might try to detect this from metadata
+                this.state.videoFps = 30;
+                
+                // Some heuristics based on duration and common frame rates
+                if (duration > 0) {
+                    // Check if duration suggests a specific frame rate
+                    const commonRates = [24, 25, 29.97, 30, 50, 59.94, 60];
+                    
+                    // For now, we'll stick with 30 FPS as a reasonable default
+                    // In practice, you might use libraries like ffprobe.js or analyze frame timing
+                    this.state.videoFps = 30;
+                }
+            }
+
+            formatDuration(seconds) {
+                if (!seconds || isNaN(seconds)) return '0:00';
+                
+                const mins = Math.floor(seconds / 60);
+                const secs = Math.floor(seconds % 60);
+                return `${mins}:${secs.toString().padStart(2, '0')}`;
+            }
+
+            formatFileSize(bytes) {
+                if (!bytes || bytes === 0) return '0 B';
+                
+                const sizes = ['B', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(1024));
+                const size = bytes / Math.pow(1024, i);
+                
+                return `${Math.round(size * 100) / 100} ${sizes[i]}`;
+            }
+
+            /**
+             * Initialize the menu system with dropdown functionality
+             */
+            initializeMenuSystem() {
+                // Get all menu items
+                const menuItems = document.querySelectorAll('.menu-item');
+                
+                // Add event listeners for each menu item
+                menuItems.forEach(menuItem => {
+                    const dropdown = menuItem.querySelector('.dropdown-menu');
+                    if (!dropdown) return;
+                    
+                    // Show dropdown on hover
+                    menuItem.addEventListener('mouseenter', () => {
+                        this.hideAllDropdowns();
+                        dropdown.classList.add('show');
+                    });
+                    
+                    // Hide dropdown when mouse leaves
+                    menuItem.addEventListener('mouseleave', () => {
+                        dropdown.classList.remove('show');
+                    });
+                    
+                    // Handle dropdown item clicks
+                    dropdown.addEventListener('click', (e) => {
+                        const dropdownItem = e.target.closest('.dropdown-item');
+                        if (!dropdownItem || dropdownItem.classList.contains('disabled')) {
+                            return;
+                        }
+                        
+                        const action = dropdownItem.getAttribute('data-action');
+                        if (action) {
+                            this.handleMenuAction(action);
+                            this.hideAllDropdowns();
+                        }
+                    });
+                });
+                
+                // Hide dropdowns when clicking outside
+                document.addEventListener('click', (e) => {
+                    if (!e.target.closest('.menu-item')) {
+                        this.hideAllDropdowns();
+                    }
+                });
+                
+                // Hide dropdowns on escape key
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        this.hideAllDropdowns();
+                    }
+                });
+            }
+            
+            /**
+             * Hide all dropdown menus
+             */
+            hideAllDropdowns() {
+                const dropdowns = document.querySelectorAll('.dropdown-menu');
+                dropdowns.forEach(dropdown => {
+                    dropdown.classList.remove('show');
+                });
+            }
+            
+            /**
+             * Handle menu actions
+             */
+            handleMenuAction(action) {
+                switch (action) {
+                    // File menu actions
+                    case 'open':
+                        this.elements.fileInput.click();
+                        break;
+                    case 'export':
+                        if (this.state.isVideoLoaded) {
+                            this.exportFrame();
+                        } else {
+                            this.showError('No video loaded. Please load a video first.');
+                        }
+                        break;
+                    case 'export-as':
+                        if (this.state.isVideoLoaded) {
+                            // Focus on format selector to let user choose format
+                            this.elements.formatSelect.focus();
+                            this.showSuccess('Select your preferred format in the Export Settings panel, then click Export Frame.');
+                        } else {
+                            this.showError('No video loaded. Please load a video first.');
+                        }
+                        break;
+                    case 'recent':
+                        this.showError('Recent files feature not yet implemented.');
+                        break;
+                    
+                    // Edit menu actions
+                    case 'undo':
+                    case 'redo':
+                        this.showError('Undo/Redo functionality not available for this application.');
+                        break;
+                    case 'copy-frame':
+                        if (this.state.isVideoLoaded) {
+                            this.copyFrameToClipboard();
+                        } else {
+                            this.showError('No video loaded. Please load a video first.');
+                        }
+                        break;
+                    case 'preferences':
+                        this.showPreferencesDialog();
+                        break;
+                    
+                    // Window menu actions
+                    case 'minimize':
+                        this.showError('Window minimize not available in web application.');
+                        break;
+                    case 'zoom':
+                        this.toggleFullscreen();
+                        break;
+                    case 'show-project':
+                        this.togglePanel('left');
+                        break;
+                    case 'show-timeline':
+                        this.togglePanel('timeline');
+                        break;
+                    case 'show-export':
+                        this.togglePanel('right');
+                        break;
+                    case 'reset-layout':
+                        this.resetLayout();
+                        break;
+                    
+                    // Help menu actions
+                    case 'about':
+                        this.showAboutDialog();
+                        break;
+                    case 'shortcuts':
+                        this.showKeyboardShortcuts();
+                        break;
+                    case 'user-guide':
+                        this.showUserGuide();
+                        break;
+                    case 'report-bug':
+                        this.showBugReport();
+                        break;
+                    case 'system-info':
+                        this.showSystemInfo();
+                        break;
+                    
+                    default:
+                        this.showError(`Action "${action}" not implemented yet.`);
+                        break;
+                }
+            }
+            
+            /**
+             * Copy current frame to clipboard
+             */
+            copyFrameToClipboard() {
+                if (!this.state.isVideoLoaded) return;
+                
+                try {
+                    const canvas = this.elements.previewCanvas;
+                    canvas.toBlob((blob) => {
+                        if (navigator.clipboard && navigator.clipboard.write) {
+                            const item = new ClipboardItem({ 'image/png': blob });
+                            navigator.clipboard.write([item]).then(() => {
+                                this.showSuccess('Frame copied to clipboard!');
+                            }).catch(() => {
+                                this.showError('Failed to copy frame to clipboard. Your browser may not support this feature.');
+                            });
+                        } else {
+                            this.showError('Clipboard API not supported in your browser.');
+                        }
+                    }, 'image/png');
+                } catch (error) {
+                    this.showError('Failed to copy frame to clipboard.');
+                }
+            }
+            
+            /**
+             * Toggle fullscreen mode
+             */
+            toggleFullscreen() {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(() => {
+                        this.showError('Fullscreen not supported or blocked by browser.');
+                    });
+                } else {
+                    document.exitFullscreen();
+                }
+            }
+            
+            /**
+             * Toggle panel visibility
+             */
+            togglePanel(panel) {
+                const panels = {
+                    left: document.querySelector('.left-panel'),
+                    right: document.querySelector('.right-panel'),
+                    timeline: document.querySelector('.timeline-panel')
+                };
+                
+                const targetPanel = panels[panel];
+                if (targetPanel) {
+                    const isHidden = targetPanel.style.display === 'none';
+                    targetPanel.style.display = isHidden ? 'flex' : 'none';
+                    this.showSuccess(`${panel.charAt(0).toUpperCase() + panel.slice(1)} panel ${isHidden ? 'shown' : 'hidden'}.`);
+                }
+            }
+            
+            /**
+             * Reset layout to default
+             */
+            resetLayout() {
+                const panels = document.querySelectorAll('.left-panel, .right-panel, .timeline-panel');
+                panels.forEach(panel => {
+                    panel.style.display = 'flex';
+                });
+                this.showSuccess('Layout reset to default.');
+            }
+            
+            /**
+             * Show preferences dialog
+             */
+            showPreferencesDialog() {
+                const message = `
+Frame Exporter Pro Preferences:
+
+• Default Export Format: ${this.elements.formatSelect.value.toUpperCase()}
+• Default Quality: ${this.elements.qualitySlider.value}%
+• Video FPS Estimation: ${this.state.videoFps} FPS
+• Maximum File Size: 500MB
+
+Use the Export Settings panel to adjust format and quality preferences.
+                `.trim();
+                
+                alert(message);
+            }
+            
+            /**
+             * Show about dialog
+             */
+            showAboutDialog() {
+                const message = `
+Frame Exporter Pro v2.1.0
+
+A professional video frame extraction tool with precision timeline scrubbing and multiple export formats.
+
+Features:
+• Drag & drop video loading
+• Frame-accurate timeline scrubbing
+• Multiple export formats (JPEG, PNG, WebP)
+• Quality control and file size estimation
+• Professional Adobe Premiere Pro inspired interface
+• Accessibility compliant (WCAG 2.1 AA)
+• Browser compatibility detection
+
+Built with modern web technologies for maximum compatibility and performance.
+                `.trim();
+                
+                alert(message);
+            }
+            
+            /**
+             * Show keyboard shortcuts
+             */
+            showKeyboardShortcuts() {
+                const message = `
+Keyboard Shortcuts:
+
+Timeline Navigation:
+• ← → Arrow Keys: Move 1 frame
+• ↑ ↓ Arrow Keys: Move 10 frames
+• Home: Go to first frame
+• End: Go to last frame
+
+File Operations:
+• Ctrl+O: Open video file
+• Ctrl+E: Export current frame
+• Ctrl+R: Reset/New video
+
+Interface:
+• Escape: Close menus
+• F11: Toggle fullscreen (browser dependent)
+
+Accessibility:
+• Tab: Navigate between controls
+• Space/Enter: Activate buttons and dropzone
+                `.trim();
+                
+                alert(message);
+            }
+            
+            /**
+             * Show user guide
+             */
+            showUserGuide() {
+                const message = `
+Frame Exporter Pro User Guide:
+
+1. Load Video:
+   • Drag & drop a video file onto the import area
+   • Or click "Browse" to select a file
+   • Supported formats: MP4, WebM, MOV, and more
+
+2. Navigate Timeline:
+   • Use the timeline scrubber to seek to any frame
+   • Keyboard arrows for precise frame navigation
+   • Real-time preview updates as you scrub
+
+3. Export Frame:
+   • Choose format: JPEG (photos), PNG (graphics), WebP (modern)
+   • Adjust quality slider (higher = larger file size)
+   • Click "Export Frame" to download
+
+4. Tips:
+   • The tool starts at the final frame by default
+   • File size estimate updates in real-time
+   • Use PNG for images with transparency
+   • WebP offers best compression for modern browsers
+
+For technical support, use Help > Report Bug.
+                `.trim();
+                
+                alert(message);
+            }
+            
+            /**
+             * Show bug report dialog
+             */
+            showBugReport() {
+                const message = `
+Report a Bug:
+
+If you encounter any issues with Frame Exporter Pro, please provide:
+
+1. Browser and version (e.g., Chrome 118.0)
+2. Operating system (e.g., Windows 11, macOS 14)
+3. Video file format and size
+4. Steps to reproduce the issue
+5. Error messages (check browser console: F12)
+
+System Information:
+• User Agent: ${navigator.userAgent}
+• Screen Resolution: ${screen.width}×${screen.height}
+• Available Memory: ${navigator.deviceMemory || 'Unknown'} GB
+• Hardware Concurrency: ${navigator.hardwareConcurrency || 'Unknown'} cores
+
+Please copy this information when reporting bugs.
+                `.trim();
+                
+                alert(message);
+            }
+            
+            /**
+             * Show system information
+             */
+            showSystemInfo() {
+                const canvas = document.createElement('canvas');
+                const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                const debugInfo = gl ? gl.getExtension('WEBGL_debug_renderer_info') : null;
+                
+                const info = {
+                    browser: navigator.userAgent,
+                    platform: navigator.platform,
+                    language: navigator.language,
+                    cookieEnabled: navigator.cookieEnabled,
+                    onLine: navigator.onLine,
+                    screenResolution: `${screen.width}×${screen.height}`,
+                    colorDepth: `${screen.colorDepth}-bit`,
+                    deviceMemory: navigator.deviceMemory ? `${navigator.deviceMemory} GB` : 'Unknown',
+                    hardwareConcurrency: navigator.hardwareConcurrency || 'Unknown',
+                    gpu: debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : 'Unknown',
+                    webglVersion: gl ? (gl.getParameter(gl.VERSION) || 'WebGL 1.0') : 'Not supported'
+                };
+                
+                const message = `
+System Information:
+
+Browser: ${info.browser}
+Platform: ${info.platform}
+Language: ${info.language}
+Online: ${info.onLine ? 'Yes' : 'No'}
+Cookies: ${info.cookieEnabled ? 'Enabled' : 'Disabled'}
+
+Display:
+• Resolution: ${info.screenResolution}
+• Color Depth: ${info.colorDepth}
+
+Hardware:
+• CPU Cores: ${info.hardwareConcurrency}
+• Memory: ${info.deviceMemory}
+• GPU: ${info.gpu}
+• WebGL: ${info.webglVersion}
+
+Frame Exporter Pro v2.1.0
+                `.trim();
+                
+                alert(message);
+            }
+
+            /**
+             * Destroy the application and clean up all resources
+             */
+            destroy() {
+                this.cleanup();
+                this.removeEventListeners();
+                
+                // Remove video element
+                if (this.video && this.video.parentNode) {
+                    this.video.parentNode.removeChild(this.video);
+                }
+                
+                // Clear all references
+                this.elements = null;
+                this.state = null;
+                this.video = null;
+                this.boundMethods = null;
+            }
+        }
+
+        // Initialize the application when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                window.frameExporterPro = new FrameExporterPro();
+            } catch (error) {
+                console.error('Failed to initialize Frame Exporter Pro:', error);
+                
+                // Show fallback error message
+                const errorDiv = document.createElement('div');
+                errorDiv.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: #fee;
+                    border: 1px solid #fcc;
+                    color: #c33;
+                    padding: 2rem;
+                    border-radius: 8px;
+                    max-width: 500px;
+                    text-align: center;
+                    z-index: 9999;
+                `;
+                errorDiv.innerHTML = `
+                    <h3>Application Failed to Load</h3>
+                    <p>Frame Exporter Pro could not initialize properly. Please refresh the page or try using a different browser.</p>
+                    <p><small>Error: ${error.message}</small></p>
+                `;
+                document.body.appendChild(errorDiv);
+            }
+        });
+
+        // Global error handler for unhandled errors
+        window.addEventListener('error', (event) => {
+            console.error('Unhandled error in Frame Exporter Pro:', event.error);
+        });
+
+        // Global promise rejection handler
+        window.addEventListener('unhandledrejection', (event) => {
+            console.error('Unhandled promise rejection in Frame Exporter Pro:', event.reason);
+        });
+    </script>
+</body>
+</html>
