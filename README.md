@@ -4,7 +4,7 @@
 >
 > Frame Exporter Pro lets you step through videos one frame at a time and save still images in JPEG, PNG, or HEIC format. It is built for video editors, photographers, content creators, and anyone who needs a specific frame from a video clip. Free to download. Optional one-time Premium Unlock, $4.99.
 >
-> - Website: https://workmanl.github.io/Frame-Exporter-Pro/app/
+> - Website: https://emrldlabs.com/apps/frame-exporter-pro/
 > - App Store: https://apps.apple.com/us/app/frame-exporter-pro/id6757141577
 > - Support: https://github.com/workmanl/Frame-Exporter-Pro/issues
 > - Email: hello@emrldlabs.com
