@@ -1,5 +1,15 @@
 # Frame Exporter Pro
 
+> **Frame Exporter Pro is also an iPhone and iPad app.** Extract still frames from videos with frame-by-frame control.
+>
+> Frame Exporter Pro lets you step through videos one frame at a time and save still images in JPEG, PNG, or HEIC format. It is built for video editors, photographers, content creators, and anyone who needs a specific frame from a video clip. Free to download. Optional one-time Premium Unlock, $4.99.
+>
+> - Website: https://workmanl.github.io/Frame-Exporter-Pro/app/
+> - App Store: https://apps.apple.com/us/app/frame-exporter-pro/id6757141577
+> - Support: https://github.com/workmanl/Frame-Exporter-Pro/issues
+> - Email: hello@emrldlabs.com
+> - Privacy: https://workmanl.github.io/Frame-Exporter-Pro/app/privacy.html
+
 A professional video frame extraction tool with an Adobe Premiere Pro-inspired interface. Extract high-quality frames from your videos with precision and ease.
 
 ## Features
